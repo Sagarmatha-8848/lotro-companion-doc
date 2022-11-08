@@ -10,11 +10,11 @@ a new WINE environment will be installed. This guide is only designed for MacOS 
 
 The process to install and configure a new WINE environment is broken down into the following steps:
 1. Install Homebrew.
-2. Install Wine.
+2. Install WINE.
 3. Run the Lotro Client in the new WINE environment.
 4. Run Lotro Companion in the new WINE environment.
 
-## Install Homebrew
+## Step 1: Install Homebrew
 In order to install WINE, we use a helper tool called `Homebrew`. Open a `Terminal` window and enter the following command:
 
 `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"`
@@ -23,7 +23,7 @@ After the command completes, verify homebrew installation by running:
 
 `brew doctor`
 
-## Install WINE
+## Step 2: Install WINE
 Install the latest stable version of WINE by running the following command in `Terminal`:
 
 `brew install wine-stable`
@@ -40,12 +40,45 @@ Just to double check everything is good to go, run:
 
 `brew doctor`
 
-## Run Lotro Client in new WINE
+## Step 3: Run Lotro Client in new WINE
 
 In the Finder, navigate to the following folder:
 
 `~/Library/Application Support/com.standingstonegames.lotro/common/wineprefix/drive_c/Program Files (x86)/StandingStoneGames/The Lord of the Rings Online`
 
-You should find a file called `LotroLauncher.exe`. Drag this file to the Dock but since this is not a native Mac application, you need to drag it to the right side of the Dock (if Dock is horizontal) or the bottom of the Dock (if Dock is vertical). If you click `LotroLauncher.exe` in the Dock, it should now run the launcher in the new Wine Stable environment. If it launches a different application, you will need to open it in the Finder and tell it to use Wine Stable to run the application.
+You should find a file called `LotroLauncher.exe`. Drag this file to the Dock but since this is not a native Mac application, you need to drag it to the right side of the Dock (if Dock is horizontal) or the bottom of the Dock (if Dock is vertical). If you click `LotroLauncher.exe` in the Dock, it should now run the launcher in the new Wine Stable environment. If it launches a different application, you will need to open it in the Finder and tell it to use Wine Stable to open the application.
 
-## Run Lotro Compansion in new WINE
+## Step 4: Run Lotro Compansion in new WINE
+LotroCompanion.sh in the `app` folder will run LC using Java Runtime installed on MacOS. To change this to using the Java Runtime for Windows included with Lotro Companion, we need to make some changes to this shell script. However, we will create a new shell script named lcw.sh with the following content:
+
+```
+#!/bin/bash
+JAVA_EXE=../runtime/bin/java.exe
+JAVA_OPTS="-Dcom.sun.management.jmxremote -Duser.language=en -Dlogback.configurationFile=logback.xml"
+KS=`pwd`/kickstarter
+
+CLASSPATH=${KS}/delta-kickstarter-1.0.jar
+CLASSPATH="${CLASSPATH};${KS}/delta-launcher-1.0.jar"
+CLASSPATH="${CLASSPATH};${KS}/delta-updates-manager-1.0.jar"
+CLASSPATH="${CLASSPATH};${KS}/delta-downloads-3.1.jar"
+CLASSPATH="${CLASSPATH};${KS}/delta-common-1.6.4.jar"
+CLASSPATH="${CLASSPATH};${KS}/httpasyncclient-4.1.4.jar"
+CLASSPATH="${CLASSPATH};${KS}/httpclient-4.5.5.jar"
+CLASSPATH="${CLASSPATH};${KS}/httpcore-4.4.9.jar"
+CLASSPATH="${CLASSPATH};${KS}/httpcore-nio-4.4.10.jar"
+CLASSPATH="${CLASSPATH};${KS}/commons-codec-1.10.jar"
+CLASSPATH="${CLASSPATH};${KS}/commons-logging-1.2.jar"
+CLASSPATH="${CLASSPATH};${KS}/log4j-1.2.17.jar"
+wine64 $JAVA_EXE ${JAVA_OPTS} -classpath "${CLASSPATH}" delta.kickstarter.Kickstarter
+```
+
+Run lcw.sh to verify that Lotro Companion now runs under WINE using the Java runtime for Windows. However, importing a character won't work just yet.
+The Lotro Client Path setup in [Configuration](../HowTo/ApplicationConfiguration/main.md) will not contain the actual Lotro Client files. However, we can
+use a symbolic link to disguise the fact that these files are actually in a different location outside of WINE.
+```
+cd ~/.wine/drive_c/Program\ Files\ \(x86\)`
+ln -s ~/Library/Application\ Support/com.standingstonegames.lotro/common/wineprefix/drive_c/Program\ Files\ \(x86\)/StandingStoneGames/ .
+```
+Re-run lcw.sh and start the Lotro Client. You should now be able to [import characters](../LocalClientImport/main.md]).
+
+**NOTE: Be sure to make a backup of lcw.sh outside of the Lotro Application directory as the file might be removed if you re-install Lotro Companion in the same location.**
